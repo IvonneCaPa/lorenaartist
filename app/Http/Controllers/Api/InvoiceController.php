@@ -7,8 +7,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Models\Invoice;
 use App\Services\InvoiceCreationService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class InvoiceController extends Controller
 {
@@ -50,5 +53,37 @@ class InvoiceController extends Controller
         return response()->json([
             'data' => $invoice->load(['lines', 'taxBreakdowns', 'client']),
         ], 200);
+    }
+
+    public function downloadPdf(Invoice $invoice)
+    {
+        $relations = ['lines', 'taxBreakdowns', 'client'];
+
+        if ($invoice->rectified_invoice_id) {
+            $relations[] = 'rectifiedInvoice';
+        }
+
+        $invoice->load($relations);
+
+        // Generar el código QR en SVG codificado en base64
+        $qrSvg = QrCode::format('svg')
+            ->size(120)
+            ->errorCorrection('M')
+            ->generate($invoice->qr_payload);
+
+        $qrBase64 = base64_encode($qrSvg);
+
+        $pdf = Pdf::loadView('pdf.invoice', [
+            'invoice' => $invoice,
+            'qrBase64' => $qrBase64,
+        ])->setPaper('a4', 'portrait');
+
+        $fileName = sprintf('Factura-%s-%s.pdf', $invoice->series, $invoice->number);
+
+        // Devolver el stream/descarga con los headers MIME explícitos
+        return response($pdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ]);
     }
 }

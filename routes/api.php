@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\PublicServiceController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ClientController;
+use App\Http\Controllers\Api\AppointmentController;
 
 // --- RUTAS PÚBLICAS (Web comercial / Landing) ---
 // Accesibles en: /api/public/...
@@ -22,6 +23,7 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf']);
 
     // Clientes (/api/clients, /api/clients/{id}, etc.)
     Route::apiResource('clients', ClientController::class);
@@ -30,4 +32,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/invoices', [InvoiceController::class, 'index']);
     Route::post('/invoices', [InvoiceController::class, 'store']);
     Route::get('/invoices/{id}', [InvoiceController::class, 'show']);
+
+    // Citas y Agenda
+    Route::get('/appointments', [AppointmentController::class, 'index']);
+    Route::post('/appointments', [AppointmentController::class, 'store']);
+    Route::patch('/appointments/{appointment}/status', [AppointmentController::class, 'updateStatus']);
 });

@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Invoice extends Model
 {
@@ -22,5 +24,13 @@ class Invoice extends Model
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    /**
+     * Relación con la factura original que rectifica (si aplica)
+     */
+    public function rectifiedInvoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class, 'rectified_invoice_id');
     }
 }
